@@ -74,6 +74,7 @@
 
   <div id="toolbar">
     <button id="loadBtn">도안 불러오기</button>
+    <button id="fitBtn">도안 맞추기</button>
     <input type="color" id="colorPicker" value="#ff5252">
     <span>최근 색:</span>
     <div id="history"></div>
@@ -151,20 +152,16 @@
       const reader = new FileReader();
       reader.onload = () => {
         img.onload = () => {
-          fitCanvasToImage();
+          canvas.width = img.width;
+          canvas.height = img.height;
           drawImage();
-          resetView();
+          fitToScreen();
           clearUndo();
         };
         img.src = reader.result;
       };
       reader.readAsDataURL(file);
     });
-
-    function fitCanvasToImage() {
-      canvas.width = img.width;
-      canvas.height = img.height;
-    }
 
     function drawImage() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -264,6 +261,8 @@
 
     // ---------- View Transform ----------
     let scale = 1;
+    let minScale = 1;
+    let maxScale = 6;
     let offsetX = 0;
     let offsetY = 0;
 
@@ -272,12 +271,20 @@
         `translate(${offsetX}px, ${offsetY}px) scale(${scale}) translate(-${canvas.width / 2}px, -${canvas.height / 2}px)`;
     }
 
-    function resetView() {
-      scale = 1;
-      offsetX = 0;
-      offsetY = 0;
+    function fitToScreen() {
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const sx = cw / canvas.width;
+      const sy = ch / canvas.height;
+      scale = Math.min(sx, sy);
+      minScale = scale;
+
+      offsetX = cw / 2;
+      offsetY = ch / 2;
       applyTransform();
     }
+
+    document.getElementById("fitBtn").addEventListener("click", fitToScreen);
 
     // ---------- Coordinate Conversion ----------
     function screenToCanvas(clientX, clientY) {
@@ -316,7 +323,7 @@
         clearTimeout(longPressTimer);
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
-        lastDistance = Math.sqrt(dx * dx + dy * dy);
+        lastDistance = Math.hypot(dx, dy);
       }
     }, { passive: false });
 
@@ -332,18 +339,19 @@
         offsetY += dy;
         lastTouchX = t.clientX;
         lastTouchY = t.clientY;
+        clampPosition();
         applyTransform();
       }
 
       if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.hypot(dx, dy);
         if (lastDistance) {
-          const delta = dist / lastDistance;
-          scale *= delta;
-          scale = Math.min(Math.max(scale, 0.4), 6);
-          applyTransform();
+          const rect = container.getBoundingClientRect();
+          const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+          const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+          applyZoom(scale * (dist / lastDistance), cx, cy);
         }
         lastDistance = dist;
       }
@@ -354,6 +362,48 @@
       if (e.touches.length < 2) lastDistance = null;
       if (e.touches.length === 0) isDragging = false;
     });
+
+    // ---------- Mouse Wheel Zoom (PC) ----------
+    container.addEventListener("wheel", e => {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      applyZoom(scale * (e.deltaY < 0 ? 1.1 : 0.9), cx, cy);
+    }, { passive: false });
+
+    function applyZoom(newScale, centerX, centerY) {
+      newScale = Math.max(minScale, Math.min(maxScale, newScale));
+
+      const wx = (centerX - offsetX) / scale;
+      const wy = (centerY - offsetY) / scale;
+
+      scale = newScale;
+      offsetX = centerX - wx * scale;
+      offsetY = centerY - wy * scale;
+
+      clampPosition();
+      applyTransform();
+    }
+
+    function clampPosition() {
+      const w = canvas.width * scale;
+      const h = canvas.height * scale;
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+
+      if (w <= cw) {
+        offsetX = cw / 2;
+      } else {
+        offsetX = Math.min(w / 2, Math.max(cw - w / 2, offsetX));
+      }
+
+      if (h <= ch) {
+        offsetY = ch / 2;
+      } else {
+        offsetY = Math.min(h / 2, Math.max(ch - h / 2, offsetY));
+      }
+    }
 
     // ---------- Tap Fill ----------
     container.addEventListener("click", e => {
