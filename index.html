@@ -117,6 +117,74 @@
     #file-input {
       display: none;
     }
+
+    /* ---------- Custom Color Picker ---------- */
+    #color-panel {
+      background: linear-gradient(#fbfaf7, #f1eee8);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow:
+        0 2px 6px rgba(0,0,0,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.6);
+      border: 1px solid rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 180px;
+    }
+    
+    #sv-box {
+      position: relative;
+      width: 160px;
+      height: 120px;
+      border-radius: 10px;
+      cursor: crosshair;
+      background:
+        linear-gradient(to top, black, transparent),
+        linear-gradient(to right, white, transparent);
+      overflow: hidden;
+    }
+    
+    #sv-cursor {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 2px rgba(0,0,0,0.6);
+      transform: translate(-7px, -7px);
+      pointer-events: none;
+    }
+    
+    #hue-slider {
+      -webkit-appearance: none;
+      width: 160px;
+      height: 14px;
+      border-radius: 8px;
+      background: linear-gradient(to right,
+        red, yellow, lime, cyan, blue, magenta, red);
+      outline: none;
+    }
+    
+    #hue-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid #9caf9c;
+      cursor: pointer;
+    }
+    
+    #hue-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid #9caf9c;
+      cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -128,7 +196,12 @@
     </p>
     <div class="toolbar-row">
       <span>🎨</span>
-      <input type="color" id="colorPicker" value="#f5d7d7">
+      <div id="color-panel">
+        <div id="sv-box">
+          <div id="sv-cursor"></div>
+        </div>
+        <input id="hue-slider" type="range" min="0" max="360" value="0">
+      </div>
     </div>
     <div class="toolbar-row">
       <span>🖌️</span>
@@ -155,7 +228,6 @@
     const stage = document.getElementById("stage");
     const container = document.getElementById("canvas-container");
     const fileInput = document.getElementById("file-input");
-    const colorPicker = document.getElementById("colorPicker");
     const historyDiv = document.getElementById("history");
 
     const undoStack = [];
@@ -163,6 +235,93 @@
 
     let currentColor = "#f5d7d7";
     let img = new Image();
+
+    // ---------- Custom HSV Color Picker ----------
+    const svBox = document.getElementById("sv-box");
+    const svCursor = document.getElementById("sv-cursor");
+    const hueSlider = document.getElementById("hue-slider");
+    
+    let hue = 0;
+    let sat = 1;
+    let val = 1;
+    
+    function updateSVBackground() {
+      svBox.style.background =
+        `linear-gradient(to top, black, transparent),
+         linear-gradient(to right, white, hsl(${hue}, 100%, 50%))`;
+    }
+    
+    function setCursorFromSV() {
+      svCursor.style.left = `${sat * svBox.clientWidth}px`;
+      svCursor.style.top = `${(1 - val) * svBox.clientHeight}px`;
+    }
+    
+    function updateColor() {
+      const { r, g, b } = hsvToRgb(hue / 360, sat, val);
+      currentColor = rgbToHex(r, g, b);
+      addToHistory(currentColor);
+    }
+    
+    hueSlider.addEventListener("input", e => {
+      hue = +e.target.value;
+      updateSVBackground();
+      updateColor();
+    });
+    
+    function handleSV(e) {
+      const rect = svBox.getBoundingClientRect();
+      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+    
+      sat = x / rect.width;
+      val = 1 - y / rect.height;
+    
+      setCursorFromSV();
+      updateColor();
+    }
+    
+    svBox.addEventListener("pointerdown", e => {
+      handleSV(e);
+      svBox.setPointerCapture(e.pointerId);
+    });
+    
+    svBox.addEventListener("pointermove", e => {
+      if (e.buttons) handleSV(e);
+    });
+    
+    svBox.addEventListener("pointerup", e => {
+      svBox.releasePointerCapture(e.pointerId);
+    });
+    
+    // ---------- HSV Utils ----------
+    function hsvToRgb(h, s, v) {
+      const i = Math.floor(h * 6);
+      const f = h * 6 - i;
+      const p = v * (1 - s);
+      const q = v * (1 - f * s);
+      const t = v * (1 - (1 - f) * s);
+    
+      let r, g, b;
+      switch (i % 6) {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        case 5: r = v; g = p; b = q; break;
+      }
+    
+      return {
+        r: Math.round(r * 255),
+        g: Math.round(g * 255),
+        b: Math.round(b * 255)
+      };
+    }
+    
+    // 초기 상태
+    updateSVBackground();
+    setCursorFromSV();
+    updateColor();
 
     // ---------- Recent Color History ----------
     const colorHistory = [];
@@ -185,17 +344,11 @@
         if (color === currentColor) div.classList.add("selected");
         div.addEventListener("click", () => {
           currentColor = color;
-          colorPicker.value = color;
           renderHistory();
         });
         historyDiv.appendChild(div);
       });
     }
-
-    colorPicker.addEventListener("change", e => {
-      currentColor = e.target.value;
-      addToHistory(currentColor);
-    });
 
     addToHistory(currentColor);
 
@@ -370,7 +523,6 @@
           const data = ctx.getImageData(x, y, 1, 1).data;
           const hex = rgbToHex(data[0], data[1], data[2]);
           currentColor = hex;
-          colorPicker.value = hex;
           addToHistory(hex);
         }, 500);
       }
@@ -455,6 +607,7 @@
 
 </body>
 </html>
+
 
 
 
