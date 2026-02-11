@@ -191,7 +191,7 @@
         <div id="sv-box">
           <div id="sv-cursor"></div>
         </div>
-        <input id="hue-slider" type="range" min="0" max="360" value="0">
+        <input id="hue-slider" type="range" min="0" max="360" value="350">
       </div>
     </div>
     <div class="toolbar-row">
@@ -224,7 +224,7 @@
     const undoStack = [];
     const MAX_UNDO = 20;
 
-    let currentColor = "#f5d7d7";
+    let currentColor = "#f2dade";
     let img = new Image();
 
     // ---------- Recent Color History ----------
@@ -262,9 +262,9 @@
     const svCursor = document.getElementById("sv-cursor");
     const hueSlider = document.getElementById("hue-slider");
     
-    let hue = 0;
-    let sat = 1;
-    let val = 1;
+    let hue = 350;
+    let sat = 0.10;
+    let val = 0.95;
     
     function updateSVBackground() {
       svBox.style.background =
@@ -638,6 +638,7 @@
 
 </body>
 </html>
+
 
 
 
