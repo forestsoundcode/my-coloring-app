@@ -56,8 +56,8 @@
     }
     #stage {
       position: absolute;
-      left: 50%;
-      top: 50%;
+      left: 0;
+      top: 0;
       transform-origin: 0 0;
     }
     canvas {
@@ -261,14 +261,13 @@
 
     // ---------- View Transform ----------
     let scale = 1;
-    let minScale = 1;
+    let minScale = 0.1;
     let maxScale = 6;
     let offsetX = 0;
     let offsetY = 0;
 
     function applyTransform() {
-      stage.style.transform =
-        `translate(${offsetX}px, ${offsetY}px) scale(${scale}) translate(-${canvas.width / 2}px, -${canvas.height / 2}px)`;
+      stage.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     }
 
     function fitToScreen() {
@@ -277,10 +276,10 @@
       const sx = cw / canvas.width;
       const sy = ch / canvas.height;
       scale = Math.min(sx, sy);
-      minScale = scale;
+      minScale = scale * 0.3;
 
-      offsetX = cw / 2;
-      offsetY = ch / 2;
+      offsetX = (cw - canvas.width * scale) / 2;
+      offsetY = (ch - canvas.height * scale) / 2;
       applyTransform();
     }
 
@@ -308,7 +307,6 @@
         lastTouchX = t.clientX;
         lastTouchY = t.clientY;
 
-        // Long press eyedropper
         longPressTimer = setTimeout(() => {
           const { x, y } = screenToCanvas(t.clientX, t.clientY);
           const data = ctx.getImageData(x, y, 1, 1).data;
@@ -339,7 +337,6 @@
         offsetY += dy;
         lastTouchX = t.clientX;
         lastTouchY = t.clientY;
-        clampPosition();
         applyTransform();
       }
 
@@ -351,7 +348,7 @@
           const rect = container.getBoundingClientRect();
           const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
           const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
-          applyZoom(scale * (dist / lastDistance), cx, cy);
+          zoomAt(scale * (dist / lastDistance), cx, cy);
         }
         lastDistance = dist;
       }
@@ -363,16 +360,14 @@
       if (e.touches.length === 0) isDragging = false;
     });
 
-    // ---------- Mouse Wheel Zoom (PC) ----------
+    // ---------- Mouse Wheel Zoom ----------
     container.addEventListener("wheel", e => {
       e.preventDefault();
       const rect = container.getBoundingClientRect();
-      const cx = e.clientX - rect.left;
-      const cy = e.clientY - rect.top;
-      applyZoom(scale * (e.deltaY < 0 ? 1.1 : 0.9), cx, cy);
+      zoomAt(scale * (e.deltaY < 0 ? 1.1 : 0.9), e.clientX - rect.left, e.clientY - rect.top);
     }, { passive: false });
 
-    function applyZoom(newScale, centerX, centerY) {
+    function zoomAt(newScale, centerX, centerY) {
       newScale = Math.max(minScale, Math.min(maxScale, newScale));
 
       const wx = (centerX - offsetX) / scale;
@@ -382,27 +377,7 @@
       offsetX = centerX - wx * scale;
       offsetY = centerY - wy * scale;
 
-      clampPosition();
       applyTransform();
-    }
-
-    function clampPosition() {
-      const w = canvas.width * scale;
-      const h = canvas.height * scale;
-      const cw = container.clientWidth;
-      const ch = container.clientHeight;
-
-      if (w <= cw) {
-        offsetX = cw / 2;
-      } else {
-        offsetX = Math.min(w / 2, Math.max(cw - w / 2, offsetX));
-      }
-
-      if (h <= ch) {
-        offsetY = ch / 2;
-      } else {
-        offsetY = Math.min(h / 2, Math.max(ch - h / 2, offsetY));
-      }
     }
 
     // ---------- Tap Fill ----------
