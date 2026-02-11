@@ -248,6 +248,7 @@
         if (color === currentColor) div.classList.add("selected");
         div.addEventListener("click", () => {
           currentColor = color;
+          setPickerFromHex(color);
           renderHistory();
         });
         historyDiv.appendChild(div);
@@ -262,8 +263,8 @@
     const hueSlider = document.getElementById("hue-slider");
     
     let hue = 0;
-    let sat = 50%;
-    let val = 90%;
+    let sat = 0;
+    let val = 0;
     
     function updateSVBackground() {
       svBox.style.background =
@@ -342,6 +343,45 @@
     updateSVBackground();
     setCursorFromSV();
     updateColor();
+
+    // 히스토리 색 클릭 → HSV 패널 위치 이동
+    function rgbToHsv(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      const d = max - min;
+      let h = 0;
+      const s = max === 0 ? 0 : d / max;
+      const v = max;
+    
+      if (d !== 0) {
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+    
+      return { h: h * 360, s, v };
+    }
+
+    function setPickerFromHex(hex) {
+      const bigint = parseInt(hex.slice(1), 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+    
+      const hsv = rgbToHsv(r, g, b);
+      hue = hsv.h;
+      sat = hsv.s;
+      val = hsv.v;
+    
+      hueSlider.value = hue;
+      updateSVBackground();
+      setCursorFromSV();
+    }
+
+
 
     // ---------- Load Image ----------
     document.getElementById("loadBtn").addEventListener("click", () => {
@@ -598,6 +638,7 @@
 
 </body>
 </html>
+
 
 
 
