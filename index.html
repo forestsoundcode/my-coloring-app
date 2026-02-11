@@ -12,7 +12,7 @@
     body {
       margin: 0;
       font-family: system-ui, sans-serif;
-      background: #f4f4f4;
+      background: #f4f1ec;
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -20,12 +20,36 @@
     }
     #toolbar {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       padding: 8px;
       background: #ffffff;
       border-bottom: 1px solid #ddd;
       align-items: center;
       flex-wrap: wrap;
+    }
+    #toolbar p {
+      width: 100%;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #toolbar button {
+      background: #9caf9a;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    
+    #toolbar button:hover {
+      background: #8ea18b;
+    }
+    
+    #toolbar button:active {
+      background: #7f947c;
     }
     button {
       padding: 6px 10px;
@@ -78,14 +102,16 @@
       <button id="fitBtn">도안 맞추기</button>
     </p>
     <p>
-      <span> 🎨 </span>
+      <span>🎨</span>
       <input type="color" id="colorPicker" value="#ff5252">
       <span>최근 색</span>
       <div id="history"></div>
     </p>
-    <button id="undoBtn">Undo</button>
-    <button id="resetBtn">Reset</button>
-    <button id="saveBtn">Save</button>
+    <p>
+      <button id="undoBtn">Undo</button>
+      <button id="resetBtn">Reset</button>
+      <button id="saveBtn">Save</button>
+    </p>
   </div>
 
   <div id="canvas-container">
@@ -402,5 +428,6 @@
 
 </body>
 </html>
+
 
 
