@@ -1,7 +1,7 @@
 {
   "name": "My Coloring App",
   "short_name": "Coloring",
-  "start_url": "/my-coloring-app/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f5efe6",
   "theme_color": "#f5efe6",
@@ -10,4 +10,5 @@
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
+
 
