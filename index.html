@@ -80,7 +80,7 @@
       cursor: pointer;
     }
     .history-color.selected {
-      border: 1px solid #000;
+      border: 1px solid #404040;
     }
     .row {
       display: flex;
@@ -262,8 +262,8 @@
     const hueSlider = document.getElementById("hue-slider");
     
     let hue = 0;
-    let sat = 1;
-    let val = 1;
+    let sat = 50%;
+    let val = 90%;
     
     function updateSVBackground() {
       svBox.style.background =
@@ -598,5 +598,6 @@
 
 </body>
 </html>
+
 
 
