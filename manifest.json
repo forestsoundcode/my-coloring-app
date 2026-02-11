@@ -1,5 +1,5 @@
 {
-  "name": "Calm Creative Coloring",
+  "name": "My Calm Creative Coloring",
   "short_name": "My CCC",
   "start_url": "./index.html",
   "display": "standalone",
@@ -10,6 +10,3 @@
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
-
-
-
