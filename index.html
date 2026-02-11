@@ -56,7 +56,6 @@
       transform: translateY(1px);
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
     }
-    
     #toolbar button:hover {
       background: #8ea18b;
     }
@@ -71,14 +70,6 @@
       flex-wrap: nowrap;
       gap: 6px;
       align-items: center;
-    }
-    #history div {
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
-      border: 1px solid rgba(0,0,0,0.1);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
-      cursor: pointer;
     }
     .history-color {
       display: inline-block;
@@ -236,6 +227,35 @@
     let currentColor = "#f5d7d7";
     let img = new Image();
 
+    // ---------- Recent Color History ----------
+    const colorHistory = [];
+
+    function addToHistory(color) {
+      if (colorHistory[0] === color) return;
+      const idx = colorHistory.indexOf(color);
+      if (idx !== -1) colorHistory.splice(idx, 1);
+      colorHistory.unshift(color);
+      if (colorHistory.length > 7) colorHistory.pop();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      historyDiv.innerHTML = "";
+      colorHistory.forEach(color => {
+        const div = document.createElement("div");
+        div.className = "history-color";
+        div.style.background = color;
+        if (color === currentColor) div.classList.add("selected");
+        div.addEventListener("click", () => {
+          currentColor = color;
+          renderHistory();
+        });
+        historyDiv.appendChild(div);
+      });
+    }
+
+    addToHistory(currentColor);
+
     // ---------- Custom HSV Color Picker ----------
     const svBox = document.getElementById("sv-box");
     const svCursor = document.getElementById("sv-cursor");
@@ -322,35 +342,6 @@
     updateSVBackground();
     setCursorFromSV();
     updateColor();
-
-    // ---------- Recent Color History ----------
-    const colorHistory = [];
-
-    function addToHistory(color) {
-      if (colorHistory[0] === color) return;
-      const idx = colorHistory.indexOf(color);
-      if (idx !== -1) colorHistory.splice(idx, 1);
-      colorHistory.unshift(color);
-      if (colorHistory.length > 7) colorHistory.pop();
-      renderHistory();
-    }
-
-    function renderHistory() {
-      historyDiv.innerHTML = "";
-      colorHistory.forEach(color => {
-        const div = document.createElement("div");
-        div.className = "history-color";
-        div.style.background = color;
-        if (color === currentColor) div.classList.add("selected");
-        div.addEventListener("click", () => {
-          currentColor = color;
-          renderHistory();
-        });
-        historyDiv.appendChild(div);
-      });
-    }
-
-    addToHistory(currentColor);
 
     // ---------- Load Image ----------
     document.getElementById("loadBtn").addEventListener("click", () => {
@@ -607,19 +598,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
