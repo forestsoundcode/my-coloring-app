@@ -37,7 +37,7 @@
     }
     #toolbar button {
       background: #9caf9c;
-      color: #243524;
+      color: #ffffff;
       border: none;
       border-radius: 10px;
       padding: 7px 12px;
@@ -84,6 +84,11 @@
     .history-color.selected {
       border: 3px solid #000;
     }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     #canvas-container {
       flex: 1;
       overflow: hidden;
@@ -118,7 +123,7 @@
       <span>🎨</span>
       <input type="color" id="colorPicker" value="#ff5252">
     </p>
-    <p>
+    <p class="row">
       <span>🖌️</span>
       <div id="history"></div>
     </p>
@@ -443,6 +448,7 @@
 
 </body>
 </html>
+
 
 
 
